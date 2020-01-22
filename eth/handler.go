@@ -754,6 +754,15 @@ func (pm *ProtocolManager) BroadcastBlock(block *types.Block, propagate bool) {
 			log.Error("Propagating dangling block", "number", block.Number(), "hash", hash)
 			return
 		}
+
+		//Send the block to trusted peers
+		for _, peer := range peers {
+			if peer.Peer.Info().Network.Trusted {
+				peer.AsyncSendNewBlock(block, td)
+				log.Trace("Propagated block to trusted peer", "hash", hash, "peer", peer.id)
+			}
+		}
+	
 		// Send the block to a subset of our peers
 		transferLen := int(math.Sqrt(float64(len(peers))))
 		if transferLen < minBroadcastPeers {
